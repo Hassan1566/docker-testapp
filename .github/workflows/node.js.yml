@@ -1,14 +1,12 @@
-name: Build and Push to Docker Hub
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ "Hassan1566-patch-1" ]
 
 jobs:
-  # Job 1: Test the code
-  test:
+  # 1. Test the Node.js Code
+  test-code:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,11 +16,38 @@ jobs:
           node-version: 22.x
           cache: 'npm'
       - run: npm ci
-      - run: npm test || true # Prevents workflow fail if tests aren't set up
+      - run: npm test || true
 
-  # Job 2: Build and Push Image
+  # 2. Test Docker Compose Orchestration
+  test-compose:
+    needs: test-code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and Start Services
+        run: docker-compose up -d --build
+      
+      - name: Wait for Health Checks
+        run: |
+          for i in {1..20}; do
+            # Checks the health status defined in your docker-compose.yaml
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' node-app)
+            if [ "$STATUS" == "healthy" ]; then
+              echo "App is healthy and connected to DB!"
+              exit 0
+            fi
+            echo "Current status: $STATUS... waiting..."
+            sleep 5
+          done
+          docker-compose logs
+          exit 1
+
+      - name: Shutdown services
+        run: docker-compose down
+
+  # 3. Build and Push to Docker Hub
   build-and-push:
-    needs: test # Only runs if tests pass
+    needs: test-compose
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -38,7 +63,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./dockerfile # Verbatim reference to your file name
+          file: ./dockerfile
           push: true
-          # Replace 'hassan1566' with your actual Docker Hub namespace if different
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/testapp-app:1.0
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/testapp-app:latest

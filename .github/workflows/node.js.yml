@@ -33,7 +33,7 @@ jobs:
         run: |
           for i in {1..20}; do
             # This '|| echo' prevents the script from crashing if the key is missing
-            STATUS=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}starting{{end}}' node-app || echo "starting")
+            STATUS=$(docker inspect --format='{{if .State.health}}{{.State.health.status}}{{else}}starting{{end}}' node-app || echo "starting")
             
             if [ "$STATUS" == "healthy" ]; then
               echo "✅ App is healthy!"

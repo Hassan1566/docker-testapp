@@ -37,6 +37,7 @@ services:
     build:
       context: .
       dockerfile: dockerfile
+    image: hassan1566/testapp-app:1.0
     container_name: node-app
     restart: unless-stopped
     ports:

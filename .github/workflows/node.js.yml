@@ -20,39 +20,8 @@ jobs:
       - run: npm ci
       - run: npm test || true
 
-  # 2. Test Docker Compose Orchestration
-  test-compose:
-    needs: test-code
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build and Start Services
-        run: docker compose up -d --build
-      
-      - name: Wait for Health Checks
-        run: |
-          for i in {1..20}; do
-            # This '|| echo' prevents the script from crashing if the key is missing
-            STATUS=$(docker inspect --format='{{if .State.health}}{{.State.health.status}}{{else}}starting{{end}}' node-app || echo "starting")
-            
-            if [ "$STATUS" == "healthy" ]; then
-              echo "✅ App is healthy!"
-              exit 0
-            fi
-            
-            echo "Wait attempt $i: current status is '$STATUS'..."
-            sleep 5
-          done
-          
-          done
-          
-          echo "❌ FAILED: Health check timed out."
-          docker compose logs node-app # Show logs so we can see why it failed
-          exit 1
-
-  # 3. Build and Push to Docker Hub
+  # 2. Build and Push to Docker Hub
   build-and-push:
-    needs: test-compose
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

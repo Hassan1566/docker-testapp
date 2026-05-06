@@ -1,6 +1,8 @@
 # Use the latest Node.js LTS version
 FROM node:22-alpine
 
+RUN apk add --no-cache curl
+
 # Create app directory
 WORKDIR /usr/src/app
 

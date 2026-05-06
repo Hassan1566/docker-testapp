@@ -36,6 +36,9 @@ app.post("/addUser", async (req, res) => {
     client.close();
 });
 
+app.get("/health", (req, res) => {
+    res.status(200).send("OK");
+});
 
 app.listen(PORT, () => {
     console.log(`server running on port ${PORT}`);
